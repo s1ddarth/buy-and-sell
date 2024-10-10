@@ -3,7 +3,7 @@ import mysql from "mysql";
 const connection = mysql.createConnection({
   host: "localhost",
   user: "hapi-server",
-  password: "hello123",
+  password: "hello123!",
   database: "buy-and-sell",
 });
 
