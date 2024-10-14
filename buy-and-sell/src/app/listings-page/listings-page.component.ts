@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Listing } from '../types';
-import { fakeListings } from '../fake-data';
+import { ListingsService } from '../listings.service';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule
+    RouterModule,
   ],
   templateUrl: './listings-page.component.html',
   styleUrl: './listings-page.component.css',
@@ -17,7 +17,11 @@ import { CommonModule } from '@angular/common';
 export class ListingsPageComponent implements OnInit {
   listings: Listing[] = [];
 
+  constructor(
+    private listingsService: ListingsService,
+  ) {}
+
   ngOnInit(): void {
-    this.listings = fakeListings;
+    this.listings = this.listingsService.getListings();
   }
 }
