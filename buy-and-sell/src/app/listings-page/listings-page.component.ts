@@ -7,21 +7,18 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-listings-page',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-  ],
+  imports: [CommonModule, RouterModule],
   templateUrl: './listings-page.component.html',
   styleUrl: './listings-page.component.css',
 })
 export class ListingsPageComponent implements OnInit {
   listings: Listing[] = [];
 
-  constructor(
-    private listingsService: ListingsService,
-  ) {}
+  constructor(private listingsService: ListingsService) {}
 
   ngOnInit(): void {
-    this.listings = this.listingsService.getListings();
+    this.listingsService
+      .getListings()
+      .subscribe((data: any) => (this.listings = data.results)); // Assign the 'results' array to listings
   }
 }
