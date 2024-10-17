@@ -2,29 +2,34 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
-import { fakeMyListings } from '../fake-data';
 import { Listing } from '../types';
+import { ListingsService } from '../listings.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-my-listings-page',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule
-  ],
+  imports: [CommonModule, RouterModule],
   templateUrl: './my-listings-page.component.html',
-  styleUrl: './my-listings-page.component.css'
+  styleUrl: './my-listings-page.component.css',
 })
 export class MyListingsPageComponent {
-  listings: Listing[] | undefined;
+  listings: Listing[] = [];
 
-  constructor() {}
+  constructor(private listingsService: ListingsService) {}
   ngOnInit(): void {
-    this.listings = fakeMyListings;
+    this.listingsService
+      .getListingsForUser()
+      .subscribe((listings) => (this.listings = listings));
   }
 
   onDeleteClicked(listingId: string): void {
-    // TODO: Implement with backend
-    alert(`Listing ${listingId} deleted`);
+    if (this.listings) {
+      this.listingsService.deleteListing(listingId).subscribe(() => {
+        this.listings = this.listings.filter(
+          (listing) => listing.id !== listingId
+        );
+      });
+    }
   }
 }
