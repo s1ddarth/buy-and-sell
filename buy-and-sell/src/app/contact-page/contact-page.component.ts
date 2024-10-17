@@ -3,8 +3,9 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { fakeListings } from '../fake-data';
 import { Listing } from '../types';
+import { ListingsService } from '../listings.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-contact-page',
@@ -18,11 +19,27 @@ export class ContactPageComponent {
   message: string = '';
   listing: Listing | undefined;
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private listingService: ListingsService
+  ) {}
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    this.listing = fakeListings.find((listing) => listing.id === id);
-    this.message = `Hi, I'm interested in your ${this.listing?.name.toLowerCase()}`;
+    if (!id) {
+      console.error('No ID found in route parameters.');
+      return; // Exit if there's no ID
+    }
+    this.listingService.getListingByID(id).subscribe({
+      next: (data: Listing) => {
+        // console.log('API response:', data); // Log the response
+        this.listing = data;
+        this.message = `Hi, I'm interested in your ${this.listing?.name.toLowerCase()}`;
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Error fetching listing:', error);
+      },
+    });
   }
 
   sendMessage(): void {
