@@ -1,6 +1,12 @@
 import Hapi from "@hapi/hapi";
+import * as admin from "firebase-admin";
 import routes from "./routes";
 import { db } from "./database";
+import credentials from "../credentials.json";
+
+admin.initializeApp({
+  credential: admin.credential.cert(credentials),
+});
 
 let server;
 
@@ -10,10 +16,10 @@ const start = async () => {
     host: "localhost",
     routes: {
       cors: {
-        origin: ['http://localhost:4200'], // Specify allowed origin(s)
+        origin: ["http://localhost:4200"], // Specify allowed origin(s)
         credentials: true, // Allow credentials if needed
-      }
-    }
+      },
+    },
   });
 
   routes.forEach((route) => server.route(route));
@@ -29,10 +35,10 @@ process.on(`unhandledRejection`, (err) => {
 });
 
 process.on(`SIGINT`, async () => {
-  console.log('stopping Server...');
-  await server.stop({timeout: 10000});
+  console.log("stopping Server...");
+  await server.stop({ timeout: 10000 });
   db.end();
-  console.log('Server stopped');
+  console.log("Server stopped");
   process.exit(0);
 });
 
