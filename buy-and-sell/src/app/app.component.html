@@ -1,8 +1,16 @@
 <div id="page-wrap">
-  <div id="max-width-column">
+  <!-- Show the nav bar and sign-out button if the user is authenticated -->
+  <div id="max-width-column" *ngIf="user$ | async as user">
     <app-nav-bar></app-nav-bar>
     <div id="content-wrap">
       <router-outlet></router-outlet>
     </div>
+    <button (click)="signOutClicked()">Sign Out</button>
+  </div>
+
+  <!-- Show the sign-in button if the user is not authenticated -->
+  <div id="max-width-column" *ngIf="!(user$ | async)">
+    <h1>Please sign in to view</h1>
+    <button (click)="signInClicked()">Sign in with Google</button>
   </div>
 </div>
