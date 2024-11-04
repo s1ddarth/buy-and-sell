@@ -1,7 +1,15 @@
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from 'firebase/auth';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Listing } from './types';
-import { Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
 
 const httpOptions = {
   headers: new HttpHeaders({
@@ -9,10 +17,28 @@ const httpOptions = {
   }),
 };
 
+const httpOptionsWithAuthToken = (token: string) => ({
+  headers: new HttpHeaders({
+    'Content-Type': 'application/json',
+    AuthToken: token,
+  }),
+});
+
 @Injectable({
   providedIn: 'root',
 })
 export class ListingsService {
+  private auth = getAuth(); // Initialize the auth instance
+
+  // Observable to track authentication state
+  authState$ = new Observable<User | null>((observer) => {
+    onAuthStateChanged(
+      this.auth,
+      (user) => observer.next(user),
+      (error) => observer.error(error)
+    );
+  });
+
   constructor(private http: HttpClient) {}
 
   getListings(): Observable<Listing[]> {
@@ -24,13 +50,34 @@ export class ListingsService {
   }
 
   addViewToListing(id: string): Observable<Listing> {
-    const url = `/api/listings/${id}/add-view`;
-    console.log(`Sending POST request to: ${url}`); // Log the request
-    return this.http.post<Listing>(`/api/listings/${id}/add-view`, httpOptions);
+    return this.http.post<Listing>(
+      `/api/listings/${id}/add-view`,
+      {},
+      httpOptions
+    );
   }
 
   getListingsForUser(): Observable<Listing[]> {
-    return this.http.get<Listing[]>('/api/users/12345/listings');
+    return new Observable<Listing[]>((observer) => {
+      this.authState$.subscribe((user) => {
+        if (user) {
+          user.getIdToken().then((token: string) => {
+            // Specify token as string
+            this.http
+              .get<Listing[]>(
+                `/api/users/${user.uid}/listings`, // Access uid from User type
+                httpOptionsWithAuthToken(token)
+              )
+              .subscribe({
+                next: (listings) => observer.next(listings),
+                error: (err) => observer.error(err),
+              });
+          });
+        } else {
+          observer.next([]);
+        }
+      });
+    });
   }
 
   deleteListing(id: string): Observable<any> {
@@ -42,11 +89,22 @@ export class ListingsService {
     description: string,
     price: number
   ): Observable<Listing> {
-    return this.http.post<Listing>(
-      `/api/listings`,
-      { name, description, price },
-      httpOptions
-    );
+    return new Observable<Listing>((observer) => {
+      this.authState$.subscribe((user) => {
+        if (user) {
+          user.getIdToken().then((token: string) => {
+            // Specify token as string
+            this.http
+              .post<Listing>(
+                '/api/listings',
+                { name, description, price },
+                httpOptionsWithAuthToken(token)
+              )
+              .subscribe((listing) => observer.next(listing));
+          });
+        }
+      });
+    });
   }
 
   editListing(
@@ -55,6 +113,10 @@ export class ListingsService {
     description: string,
     price: number
   ): Observable<Listing> {
-    return this.http.post<Listing>(`/api/listings/${id}`, {name, description, price}, httpOptions);
+    return this.http.post<Listing>(
+      `/api/listings/${id}`,
+      { name, description, price },
+      httpOptions
+    );
   }
 }
