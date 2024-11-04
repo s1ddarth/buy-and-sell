@@ -73,8 +73,22 @@ export class ListingsService {
     });
   }
 
+  // deleteListing(id: string): Observable<any> {
+  //   return this.http.delete(`/api/listings/${id}`);
+  // }
+
   deleteListing(id: string): Observable<any> {
-    return this.http.delete(`/api/listings/${id}`);
+    return new Observable<any>((observer) => {
+      this.authState$.subscribe((user) => {
+        if (user) {
+          user.getIdToken().then((token: string) => {
+            this.http
+              .delete(`/api/listings/${id}`, httpOptionsWithAuthToken(token))
+              .subscribe(() => observer.next());
+          });
+        }
+      });
+    });
   }
 
   createListing(
@@ -119,9 +133,8 @@ export class ListingsService {
               )
               .subscribe((listing) => observer.next());
           });
-        }
-        else {
-          console.error("Unauthorized ACCESS");
+        } else {
+          console.error('Unauthorized ACCESS');
         }
       });
     });
