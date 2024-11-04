@@ -1,11 +1,4 @@
-import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged,
-  User,
-} from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Listing } from './types';
@@ -113,10 +106,24 @@ export class ListingsService {
     description: string,
     price: number
   ): Observable<Listing> {
-    return this.http.post<Listing>(
-      `/api/listings/${id}`,
-      { name, description, price },
-      httpOptions
-    );
+    return new Observable<Listing>((observer) => {
+      this.authState$.subscribe((user) => {
+        if (user) {
+          user.getIdToken().then((token: string) => {
+            // Specify token as string
+            this.http
+              .post<Listing>(
+                `/api/listings/${id}`,
+                { name, description, price },
+                httpOptionsWithAuthToken(token)
+              )
+              .subscribe((listing) => observer.next());
+          });
+        }
+        else {
+          console.error("Unauthorized ACCESS");
+        }
+      });
+    });
   }
 }
